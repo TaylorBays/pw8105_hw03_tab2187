@@ -1,0 +1,191 @@
+---
+title: "Homework 03"
+output: html_document
+date: "2022-10-15"
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggridges)
+library(patchwork)
+
+library(p8105.datasets)
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+
+## Problem 0
+Created a R project to organize my work, a R Markdown to write reproducible reports, relative paths to load data from local files, and reasonable naming structures to my files. Successfully established a git repository to upload commit history. 
+
+##Problem 1
+```{r}
+# install.packages("devtools")
+devtools::install_github("p8105/p8105.datasets")
+```
+
+Had to download Rtools42 for windows to access the p8105 datasets (https://cran.r-project.org/bin/windows/Rtools/rtools42/rtools.html). Hopefully this is legit and I did not download a virus. Since that is completed I can move on to problem 1. 
+
+```{r}
+library(p8105.datasets)
+data("instacart")
+View(instacart)
+```
+
+#### Read in the data
+
+```{r}
+data("instacart")
+
+instacart = 
+  instacart %>% 
+  as_tibble(instacart)
+```
+
+This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns, with each row resprenting a single product from an instacart order. Variables include identifiers for user, order, and product; the order in which each product was added to the cart. There are several order-level variables, describing the day and time of the order, and number of days since prior order. Then there are several item-specific variables, describing the product name (e.g. Yogurt, Avocado), department (e.g. dairy and eggs, produce), and aisle (e.g. yogurt, fresh fruits), and whether the item has been ordered by this user in the past. In total, there are `r instacart %>% select(product_id) %>% distinct %>% count` products found in `r instacart %>% select(user_id, order_id) %>% distinct %>% count` orders from `r instacart %>% select(user_id) %>% distinct %>% count` distinct users.
+
+Below is a table summarizing the number of items ordered from aisle. In total, there are 134 aisles, with fresh vegetables and fresh fruits holding the most items ordered by far.
+
+```{r}
+instacart %>% 
+  count(aisle) %>% 
+  arrange(desc(n))
+```
+
+Next is a plot that shows the number of items ordered in each aisle. Here, aisles are ordered by ascending number of items.
+
+```{r}
+instacart %>% 
+  count(aisle) %>% 
+  filter(n > 10000) %>% 
+  mutate(aisle = fct_reorder(aisle, n)) %>% 
+  ggplot(aes(x = aisle, y = n)) + 
+  geom_point() + 
+  labs(title = "Number of items ordered in each aisle") +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+
+Our next table shows the three most popular items in aisles `baking ingredients`, `dog food care`, and `packaged vegetables fruits`, and includes the number of times each item is ordered in your table.
+
+```{r}
+instacart %>% 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>%
+  group_by(aisle) %>% 
+  count(product_name) %>% 
+  mutate(rank = min_rank(desc(n))) %>% 
+  filter(rank < 4) %>% 
+  arrange(desc(n)) %>%
+  knitr::kable()
+```
+
+Finally is a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. This table has been formatted in an untidy manner for human readers. Pink Lady Apples are generally purchased slightly earlier in the day than Coffee Ice Cream, with the exception of day 5.
+
+```{r}
+instacart %>%
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour = mean(order_hour_of_day)) %>%
+  spread(key = order_dow, value = mean_hour) %>%
+  knitr::kable(digits = 2)
+```
+
+##Problem 2
+```{r}
+
+```
+
+
+
+##Problem 3
+```{r}
+library(p8105.datasets)
+data("ny_noaa")
+View(ny_noaa)
+```
+
+```{r}
+data("ny_noaa")
+
+ny_noaa = 
+  ny_noaa %>% 
+  as_tibble(ny_noaa)
+```
+This dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns, with each row representing a data from one of the 100,000 weather stations. Variables include identifiers for weather station id, date of observation, precipitation, snowfall, snow depth, maximum temperature and minimum temperature. Precipitation, snowfall, and snow depth are measured in millimeters, while temperature is measured using Celsius to the tenths of a degree.
+
+Below is a table summarizing the number of different weather stations that have collected data. In total, there are 747 weather stations represented, with US1NYCN0011, US1NYCES0005, and USNYSF0030 with the least amount of data entries (days of weather information) all three having 30 days of entries.
+
+```{r}
+ny_noaa %>% 
+  count(id) %>% 
+  arrange(desc(n))
+```
+
+Do some data cleaning. Create separate variables for year, month, and day. 
+
+```{r}
+ ny_noaa %>% 
+  janitor::clean_names() %>% 
+   separate(date, into = c("year", "month", "day")) %>% 
+  mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>% 
+  mutate(month = month.name[as.integer(month)])
+View(ny_noaa)
+```
+
+Ensure observations for temperature are in degrees Celsuis not "tenths of degrees C". 
+
+```{r}
+ny_noaa %>% 
+  janitor::clean_names() %>% 
+  mutate(tmin= as.integer(tmin)) %>% 
+  mutate(tmin = as.numeric(as.integer(tmin) / 10)) %>% 
+count(tmin) %>% 
+  arrange(desc(n))
+```
+
+```{r}
+ny_noaa %>% 
+  janitor::clean_names() %>% 
+mutate(tmax= as.integer(tmax)) %>% 
+  mutate(tmax = as.numeric(as.integer(tmax) / 10)) %>% 
+count(tmax) %>% 
+arrange(desc(n))
+```
+
+Ensure precipitation and snowfall are given in reasonable units. Since snowfall is already in mm it does not need to be changed but precipitation is in tenths of a mm so that needs to be correct in a similar fashion to the minimum and maximum temperature.
+
+```{r}
+ny_noaa %>% 
+  janitor::clean_names() %>% 
+mutate(prcp= as.integer(prcp)) %>% 
+  mutate(prcp = as.numeric(as.integer(prcp) / 10)) %>% 
+count(prcp) %>% 
+arrange(desc(n))
+```
+
+For snowfall what are the most commonly observed values. Why? 
+We see that`0` was observed 2008508 times,  `25` was observed 31022 times, and `13` was observed 23095 times. There was no data for data entries 381221 times. I would assume `0` was measured so many times because on those days no snow fell, therefore the measured snowfall would be 0.
+```{r}
+ny_noaa %>% 
+  janitor::clean_names() %>% 
+  count(snow) %>% 
+arrange(desc(n))
+View(ny_noaa)
+```
+

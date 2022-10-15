@@ -111,3 +111,16 @@ instacart %>%
   knitr::kable(digits = 2)
 ```
 
+##Problem 2
+```{r}
+
+```
+
+
+
+##Problem 3
+```{r}
+library(p8105.datasets)
+data("ny_noaa")
+```
+

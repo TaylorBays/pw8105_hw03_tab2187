@@ -8,6 +8,7 @@ date: "2022-10-15"
 library(tidyverse)
 library(ggridges)
 library(patchwork)
+library(hexbin)
 
 library(p8105.datasets)
 
@@ -121,7 +122,7 @@ accel_1=
     names_to = "activity_num",
     values_to = "activity_minutes") %>%
   janitor::clean_names()
-view(accel_1)
+accel_1
 ```
 
 
@@ -151,7 +152,7 @@ accel_2=
     values_from = "total_activity"
   ) %>% 
   janitor::clean_names()
-view(accel_2)
+accel_2
 ```
 
 
@@ -169,6 +170,17 @@ accel_1 %>%
 
 ```
 
+
+
+```{r}
+ggplot(accel_1, aes(x = activity_num, y=activity_minutes, color = day )) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Activity Number",
+    y = "Minutes of the Day",
+    title= "Scatterplot of Activity Number Per Minute of Each Day"
+  )
+```
 
 ##Problem 3
 ```{r}
@@ -203,7 +215,7 @@ Do some data cleaning. Create separate variables for year, month, and day.
    separate(date, into = c("year", "month", "day")) %>% 
   mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>% 
   mutate(month = month.name[as.integer(month)])
-View(ny_noaa_tidy1)
+ny_noaa_tidy1
 ```
 
 Ensure observations for temperature are in degrees Celsuis not "tenths of degrees C". Ensure precipitation and snowfall are given in reasonable units. Since snowfall is already in mm it does not need to be changed but precipitation is in tenths of a mm so that needs to be correct in a similar fashion to the minimum and maximum temperature.
@@ -223,7 +235,7 @@ ny_noaa_tidy2 =
   mutate(prcp= as.numeric(prcp)) %>% 
   mutate(prcp = as.numeric(prcp / 10)) %>% 
  select(id, year, month, day, prcp, snow, snwd, tmax, tmin)
-view(ny_noaa_tidy2)
+ny_noaa_tidy2
 ```
 
 
@@ -235,36 +247,54 @@ ny_noaa_tidy2 %>%
   count(snow) %>% 
 arrange(desc(n))
 ```
-Trying to get the tmax mean to work.
+Trying to get the tmax mean to work. After multiple attempts I am successful. 
 
 ```{r}
-#ny_noaa_tidy2 %>% 
-  #pull(ny_noaa_tidy2, tmax) %>% 
-  #mean(tmax, na.rm = TRUE)
-ny_noaa_tidy2%>% 
-mean(tmax, na.rm = TRUE)
+mean(pull(ny_noaa_tidy2, tmax), na.rm = TRUE)
+pull(ny_noaa_tidy2, tmax) %>% 
+  mean(na.rm = TRUE)
 ```
 
 Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
 
-```{r}
-ny_noaa_tidy2 %>% 
-  group_by(month, year, id) %>% 
-  filter(
-    month %in% c("January", "July")) %>%
-  summarize(
-    tmax_mean = mean(tmax, na.rm = TRUE)
-  ) %>% 
-  ggplot(aes(x = year, y = tmax_mean, color = id)) +
-  geom_density(alpha =0.5) +
-  facet_grid(.~month)
+In the graph we see that July had on average higher maximum temperatures than in January. I do not see any outliers for the separate months on average data. 
 
-theme(axis.text.x = element_blank(), legend.position = "none")
+```{r}
+avg_max_temp_JanJuly = ny_noaa_tidy2 %>% 
+  group_by(month, year, id) %>% 
+  filter(month == "January" | month== "July") %>%
+  summarize(tmax_mean = mean(tmax, na.rm = TRUE)) 
+
+
+  ggplot(avg_max_temp_JanJuly, aes(x = year, y = tmax_mean)) +
+  geom_point()+
+    geom_path()+
+    facet_grid(.~month)+
+  labs(
+    title = "Average Maximum Temperature vs. Year by Weather Station in January and July",
+    x = "Year",
+    y = "Average Max Temperature (C)")
 ```
 
 Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
 
 ```{r}
+tmax_tmin = ny_noaa_tidy2 %>% 
+drop_na() %>% 
+  ggplot(aes(x = tmax, y=tmin)) + geom_hex() +
+  labs(title = "Hexplot showing max vs. min temperature",
+       x= "Maximum temperature (C)",
+       y= "Minimum temperature (C")
+
+snowfall = ny_noaa_tidy2 %>% 
+  drop_na() %>% 
+  filter(snow > 0 & snow < 100) %>% 
+  ggplot(aes(x =snow, y = factor(year))) + geom_density_ridges() +
+  labs(title = "Density Ridge Line Showing the Distribution of Snowfall by Year",
+       x= "Snowfall (mm)",
+       y= "Year")
+
+tmax_tmin/snowfall
 
 ```
 

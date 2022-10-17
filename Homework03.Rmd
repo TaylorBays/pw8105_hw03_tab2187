@@ -109,65 +109,63 @@ instacart %>%
 ##Problem 2
 Load, tidy, and otherwise wrangle the data. Your final dataset should include all originally observed variables and values; have useful variable names; include a weekday vs weekend variable; and encode data with reasonable variable classes. Describe the resulting dataset (e.g. what variables exist, how many observations, etc).
 
-Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
+
+-->In this data set we have maintained the variable week, day_id, and day. There is a new variable named activity_num so that we can clearly see the different activities done on a given day. Next to activity_num is activity minutes so we can clearly see how long the patient spent doing various activities clearly. As TA Jimmy Kelliher pointed out on the discussion board all other variables besides activity_* should be retained. In this level of tidying the variables are retained. 
 
 ```{r}
-accel=
+accel_1=
   read.csv("accel_data.csv") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
     activity_1:activity_1440,
     names_to = "activity_num",
-    values_to = "activity") %>%
-  mutate(
-    day = factor(day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")),
-    weekday_vs_weekend =
-      if_else(day %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>% 
-  group_by(week, day) %>% 
-  summarise(total_activity = sum(activity)) %>% 
-  pivot_wider(
-    names_from = "day",
-    values_from = "total_activity"
-  )
-view(accel)
+    values_to = "activity_minutes") %>%
+  janitor::clean_names()
+view(accel_1)
 ```
+
+
+
+Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each day, and create a table showing these totals. Are any trends apparent?
 
 -->With the table created from this code chunk we see that the person had higher activity levels on Friday's. His second and third highest ranking days were Wednesday and Thursday. The patient was also the most active during Week 2. His second and third highest ranking weeks were Week 3 and 5. The patient has odd activity data on Saturday's for Week 3 and Week 4. We can hypothesize that the patient took off the accelerometer to charge it around the same time each Saturday but did not take off the monitor for the other Saturday's.
 
-
 ```{r}
-accel=
+accel_2=
   read.csv("accel_data.csv") %>% 
   janitor::clean_names() %>% 
   pivot_longer(
     activity_1:activity_1440,
     names_to = "activity_num",
-    values_to = "activity") %>%
+    values_to = "activity_minutes") %>%
   mutate(
     day = factor(day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")),
     weekday_vs_weekend =
       if_else(day %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>% 
+   mutate(
+    activity_minutes = as.numeric(activity_minutes)) %>% 
   group_by(week, day) %>% 
-  summarise(total_activity = sum(activity)) %>% 
+  summarise(total_activity = sum(activity_minutes)) %>% 
   pivot_wider(
     names_from = "day",
     values_from = "total_activity"
-  )
-view(accel)
+  ) %>% 
+  janitor::clean_names()
+view(accel_2)
 ```
-
 
 
 Accelerometer data allows the inspection activity over the course of the day. Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. Describe in words any patterns or conclusions you can make based on this graph.
 
-accel %>% 
-  ggplot(aes(x = total_activity, y = tmax, color = name)) +
-  geom_point(aes(size = .5), alpha =.3)  +
-  geom_smooth(se = FALSE) + 
-  facet_grid(. ~ name)+
-  theme(axis.text.x = element_text(angle =90, vjust = 0.5, hjust=1))
+-->We see that the patient had on average longer active periods on Friday's. For each week presented in the plot Friday has outliers extending farther down the x-axis. This makes sense because Friday had the most active minutes. The Saturday's for week 4 and 5 appear to only have 1 activity minutes, which makes sense because the Saturday total for these weeks were very low.
 
 ```{r}
+accel_1 %>%
+  ggplot(aes(x = activity_minutes, y = day, color = day)) +
+  geom_point(aes(size = .3), alpha =.3)  +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ week)+
+  theme(axis.text.x = element_text(angle =90, vjust = 0.5, hjust=1))
 
 ```
 

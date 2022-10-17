@@ -197,19 +197,19 @@ ny_noaa %>%
 Do some data cleaning. Create separate variables for year, month, and day. 
 
 ```{r}
- ny_noaa_tidy=
+ ny_noaa_tidy1=
   ny_noaa %>% 
   janitor::clean_names() %>% 
    separate(date, into = c("year", "month", "day")) %>% 
   mutate(year = as.integer(year), month = as.integer(month), day = as.integer(day)) %>% 
   mutate(month = month.name[as.integer(month)])
-View(ny_noaa_tidy)
+View(ny_noaa_tidy1)
 ```
 
 Ensure observations for temperature are in degrees Celsuis not "tenths of degrees C". Ensure precipitation and snowfall are given in reasonable units. Since snowfall is already in mm it does not need to be changed but precipitation is in tenths of a mm so that needs to be correct in a similar fashion to the minimum and maximum temperature.
 
 ```{r}
-ny_noaa_tidy =  
+ny_noaa_tidy2 =  
   ny_noaa %>% 
   sample_n(2000) %>% 
   janitor::clean_names() %>% 
@@ -227,23 +227,24 @@ ny_noaa_tidy =
 
 
 For snowfall what are the most commonly observed values. Why? 
-We see that`0` was observed 2008508 times,  `25` was observed 31022 times, and `13` was observed 23095 times. There was no data for data entries 381221 times. I would assume `0` was measured so many times because on those days no snow fell, therefore the measured snowfall would be 0.
+-->We see that`0` was observed 2008508 times,  `25` was observed 31022 times, and `13` was observed 23095 times. There was no data for data entries 381221 times. I would assume `0` was measured so many times because on those days no snow fell, therefore the measured snowfall would be 0.
+
 ```{r}
-ny_noaa_tidy %>% 
+ny_noaa_tidy2 %>% 
   count(snow) %>% 
 arrange(desc(n))
 ```
 
 
 ```{r}
-ny_noaa_tidy%>% 
+ny_noaa_tidy2%>% 
 mean(tmax, na.rm = TRUE)
 ```
 
 Make a two-panel plot showing the average max temperature in January and in July in each station across years. Is there any observable / interpretable structure? Any outliers?
 
 ```{r}
-ny_noaa_tidy %>% 
+ny_noaa_tidy2 %>% 
   group_by(month, year, id) %>% 
   filter(
     month %in% c("January", "July")) %>%

@@ -222,7 +222,8 @@ ny_noaa_tidy2 =
   mutate(tmax = as.numeric(tmax / 10)) %>%
   mutate(prcp= as.numeric(prcp)) %>% 
   mutate(prcp = as.numeric(prcp / 10)) %>% 
- select(id, month, year, day, prcp, snow, snwd, tmax, tmin)
+ select(id, year, month, day, prcp, snow, snwd, tmax, tmin)
+view(ny_noaa_tidy2)
 ```
 
 
@@ -234,9 +235,12 @@ ny_noaa_tidy2 %>%
   count(snow) %>% 
 arrange(desc(n))
 ```
-
+Trying to get the tmax mean to work.
 
 ```{r}
+#ny_noaa_tidy2 %>% 
+  #pull(ny_noaa_tidy2, tmax) %>% 
+  #mean(tmax, na.rm = TRUE)
 ny_noaa_tidy2%>% 
 mean(tmax, na.rm = TRUE)
 ```
